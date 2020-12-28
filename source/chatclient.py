@@ -1,205 +1,477 @@
-import wx
+# -*- coding: utf-8 -*-
+
+import sys
 import socket
 import threading
-import os
 import struct
+import os
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-class MyFrameClient(wx.Frame):
-    """ We simply derive a new class of Frame. """
 
-    def __init__(self, parent, title):
+class Ui_Client(object):
+    # 实现了聊天程序中的客户端类
+    def setupUi(self, Client):
+        Client.setObjectName("Client")
+        Client.resize(1000, 800)
+        self.centralwidget = QtWidgets.QWidget(Client)
+        self.centralwidget.setObjectName("centralwidget")
+        self.frame_total = QtWidgets.QFrame(self.centralwidget)
+        self.frame_total.setGeometry(QtCore.QRect(10, 20, 981, 721))
+        self.frame_total.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_total.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_total.setObjectName("frame_total")
 
-        wx.Frame.__init__(self, parent, title=title, pos=(100, 20), size=(550, 590))
-        panel = wx.Panel(self)
-        self.name = "<anonymous user>"
+        # 界面左边部分按钮设计
+        self.frame_buttons = QtWidgets.QFrame(self.frame_total)
+        self.frame_buttons.setGeometry(QtCore.QRect(10, 30, 121, 481))
+        self.frame_buttons.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_buttons.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_buttons.setObjectName("frame_buttons")
+        self.login_button = QtWidgets.QPushButton(self.frame_buttons)
+        self.login_button.setGeometry(QtCore.QRect(20, 0, 90, 90))
+        self.login_button.setStyleSheet("border-image: url(icon/Interface.png);")
+        self.login_button.setText("")
+        self.login_button.setObjectName("login_button")
+        self.login_label = QtWidgets.QLabel(self.frame_buttons)
+        self.login_label.setGeometry(QtCore.QRect(20, 70, 81, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.login_label.setFont(font)
+        self.login_label.setTextFormat(QtCore.Qt.RichText)
+        self.login_label.setObjectName("login_label")
+        self.logout_button = QtWidgets.QPushButton(self.frame_buttons)
+        self.logout_button.setGeometry(QtCore.QRect(20, 110, 70, 70))
+        self.logout_button.setStyleSheet("border-image: url(icon/Forbidden.png);")
+        self.logout_button.setText("")
+        self.logout_button.setObjectName("logout_button")
+        self.logout_label = QtWidgets.QLabel(self.frame_buttons)
+        self.logout_label.setGeometry(QtCore.QRect(20, 170, 81, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.logout_label.setFont(font)
+        self.logout_label.setTextFormat(QtCore.Qt.RichText)
+        self.logout_label.setObjectName("logout_label")
+        self.clear_button = QtWidgets.QPushButton(self.frame_buttons)
+        self.clear_button.setGeometry(QtCore.QRect(20, 220, 70, 70))
+        self.clear_button.setStyleSheet("border-image: url(icon/Clear.png);")
+        self.clear_button.setText("")
+        self.clear_button.setObjectName("clear_button")
+        self.clear_label = QtWidgets.QLabel(self.frame_buttons)
+        self.clear_label.setGeometry(QtCore.QRect(30, 290, 81, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.clear_label.setFont(font)
+        self.clear_label.setTextFormat(QtCore.Qt.RichText)
+        self.clear_label.setObjectName("clear_label")
+        self.exit_button = QtWidgets.QPushButton(self.frame_buttons)
+        self.exit_button.setGeometry(QtCore.QRect(20, 340, 70, 70))
+        self.exit_button.setStyleSheet("border-image: url(icon/Exit.png);")
+        self.exit_button.setText("")
+        self.exit_button.setObjectName("exit_button")
+        self.exit_label = QtWidgets.QLabel(self.frame_buttons)
+        self.exit_label.setGeometry(QtCore.QRect(40, 410, 81, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.exit_label.setFont(font)
+        self.exit_label.setTextFormat(QtCore.Qt.RichText)
+        self.exit_label.setObjectName("exit_label")
 
-        #self.panel=wx.Panel(self)
-        panel.Bind(wx.EVT_ERASE_BACKGROUND,self.OnEraseBack)
+        # 界面后边部分设计
+        self.frame_info = QtWidgets.QFrame(self.frame_total)
+        self.frame_info.setGeometry(QtCore.QRect(600, 210, 381, 491))
+        self.frame_info.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_info.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_info.setObjectName("frame_info")
+        self.info = QtWidgets.QTextBrowser(self.frame_info)
+        self.info.setGeometry(QtCore.QRect(10, 70, 350, 401))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.info.setFont(font)
+        self.info.setObjectName("info")
+        self.info_label = QtWidgets.QLabel(self.frame_info)
+        self.info_label.setGeometry(QtCore.QRect(10, 0, 191, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.info_label.setFont(font)
+        self.info_label.setObjectName("info_label")
+        self.frame_send = QtWidgets.QFrame(self.frame_total)
+        self.frame_send.setGeometry(QtCore.QRect(150, 180, 431, 511))
+        self.frame_send.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_send.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_send.setObjectName("frame_send")
+        self.frame_edit = QtWidgets.QFrame(self.frame_send)
+        self.frame_edit.setGeometry(QtCore.QRect(10, 20, 421, 61))
+        self.frame_edit.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_edit.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_edit.setObjectName("frame_edit")
 
-        self.font1 = wx.Font(28, wx.ROMAN, wx.ITALIC, wx.NORMAL, False)
-        self.text1 = wx.StaticText(panel, -1, "ip：", (50, 75))
-        self.text2 = wx.StaticText(panel, -1, "port：", (50, 105))
-        self.text3 = wx.StaticText(panel, -1, "chatclient", (200, 10))
-        self.text3.SetFont(self.font1)
-        #self.text4 = wx.StaticText(panel, -1, "----------------------------------------------", (50, 10))
-        self.text4 = wx.StaticText(panel, -1, "----------------------------------------------", (50, 50))
-        #self.text4 = wx.StaticText(panel, -1, "----------------------------------------------", (250, 10))
-        self.text4 = wx.StaticText(panel, -1, "-----------------------------------------------------", (250, 50))
-        self.name_text = wx.StaticText(panel, -1, "username:", (50, 135))
-        self.to_who_mess = wx.StaticText(panel, -1, "to: ", (50, 375))
+        # 接收者选择列表
+        self.recv_label = QtWidgets.QLabel(self.frame_edit)
+        self.recv_label.setGeometry(QtCore.QRect(10, 10, 81, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.recv_label.setFont(font)
+        self.recv_label.setObjectName("recv_label")
+        self.receiver_choose = QtWidgets.QComboBox(self.frame_edit)
+        self.receiver_choose.setGeometry(QtCore.QRect(110, 20, 201, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.receiver_choose.setFont(font)
+        self.receiver_choose.setObjectName("receiver_choose")
+        self.receiver_choose.addItem("all_users")
 
-        '''new'''
-        self.to_who_file = wx.StaticText(panel, -1, "to: ", (50, 226))
+        # 选择待发送和文件，编辑待发送消息
+        self.frame_file = QtWidgets.QFrame(self.frame_send)
+        self.frame_file.setGeometry(QtCore.QRect(10, 90, 421, 61))
+        self.frame_file.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_file.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_file.setObjectName("frame_file")
+        self.file_edit = QtWidgets.QLineEdit(self.frame_file)
+        self.file_edit.setGeometry(QtCore.QRect(110, 14, 201, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.file_edit.setFont(font)
+        self.file_edit.setObjectName("file_edit")
+        self.file_label = QtWidgets.QLabel(self.frame_file)
+        self.file_label.setGeometry(QtCore.QRect(10, 10, 51, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.file_label.setFont(font)
+        self.file_label.setObjectName("file_label")
+        self.file_button = QtWidgets.QPushButton(self.frame_file)
+        self.file_button.setGeometry(QtCore.QRect(330, 14, 81, 40))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.file_button.setFont(font)
+        self.file_button.setObjectName("file_button")
+        self.send_file_button = QtWidgets.QPushButton(self.frame_send)
+        self.send_file_button.setGeometry(QtCore.QRect(10, 450, 171, 50))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.send_file_button.setFont(font)
+        self.send_file_button.setObjectName("send_file_button")
+        self.send_message_button = QtWidgets.QPushButton(self.frame_send)
+        self.send_message_button.setGeometry(QtCore.QRect(250, 450, 171, 50))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.send_message_button.setFont(font)
+        self.send_message_button.setObjectName("send_message_button")
+        self.message_edit = QtWidgets.QTextEdit(self.frame_send)
+        self.message_edit.setGeometry(QtCore.QRect(120, 170, 301, 261))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.message_edit.setFont(font)
+        self.message_edit.setObjectName("message_edit")
+        self.message_label = QtWidgets.QLabel(self.frame_send)
+        self.message_label.setGeometry(QtCore.QRect(20, 160, 91, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.message_label.setFont(font)
+        self.message_label.setObjectName("message_label")
+        self.frame_log = QtWidgets.QFrame(self.frame_total)
+        self.frame_log.setGeometry(QtCore.QRect(150, 29, 831, 151))
+        self.frame_log.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_log.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_log.setObjectName("frame_log")
 
-        self.who_online = wx.StaticText(panel, -1, "online users:", (50, 410))
-        # text window
-        self.server_ip_input = wx.TextCtrl(panel, pos=(100, 70), size=(110, 25))
-        self.server_port_input = wx.TextCtrl(panel, pos=(100, 100), size=(110, 25))
-        self.name_input = wx.TextCtrl(panel, pos=(120, 130), size=(90, 25))
-        self.send_to = wx.TextCtrl(panel, pos=(70, 370), size=(80, 30))
+        # 填入IP，端口号，用户名等信息
+        self.frame_ip = QtWidgets.QFrame(self.frame_log)
+        self.frame_ip.setGeometry(QtCore.QRect(10, 80, 361, 61))
+        self.frame_ip.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_ip.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_ip.setObjectName("frame_ip")
+        self.ip_edit = QtWidgets.QLineEdit(self.frame_ip)
+        self.ip_edit.setGeometry(QtCore.QRect(140, 14, 221, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.ip_edit.setFont(font)
+        self.ip_edit.setObjectName("ip_edit")
+        self.ip_label = QtWidgets.QLabel(self.frame_ip)
+        self.ip_label.setGeometry(QtCore.QRect(10, 10, 41, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.ip_label.setFont(font)
+        self.ip_label.setObjectName("ip_label")
+        self.frame_port = QtWidgets.QFrame(self.frame_log)
+        self.frame_port.setGeometry(QtCore.QRect(440, 80, 371, 61))
+        self.frame_port.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_port.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_port.setObjectName("frame_port")
+        self.port_edit = QtWidgets.QLineEdit(self.frame_port)
+        self.port_edit.setGeometry(QtCore.QRect(140, 14, 221, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.port_edit.setFont(font)
+        self.port_edit.setObjectName("port_edit")
+        self.port_label = QtWidgets.QLabel(self.frame_port)
+        self.port_label.setGeometry(QtCore.QRect(10, 10, 51, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.port_label.setFont(font)
+        self.port_label.setObjectName("port_label")
+        self.frame_user = QtWidgets.QFrame(self.frame_log)
+        self.frame_user.setGeometry(QtCore.QRect(10, 10, 361, 61))
+        self.frame_user.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_user.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_user.setObjectName("frame_user")
+        self.username_edit = QtWidgets.QLineEdit(self.frame_user)
+        self.username_edit.setGeometry(QtCore.QRect(140, 14, 221, 41))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.username_edit.setFont(font)
+        self.username_edit.setObjectName("username_edit")
+        self.username_label = QtWidgets.QLabel(self.frame_user)
+        self.username_label.setGeometry(QtCore.QRect(10, 10, 101, 51))
+        font = QtGui.QFont()
+        font.setFamily("Consolas")
+        font.setPointSize(10)
+        self.username_label.setFont(font)
+        self.username_label.setObjectName("username_label")
+        self.title = QtWidgets.QLabel(self.frame_log)
+        self.title.setGeometry(QtCore.QRect(530, 0, 211, 81))
+        font = QtGui.QFont()
+        font.setFamily("Baskerville Old Face")
+        font.setPointSize(36)
+        font.setBold(True)
+        font.setItalic(True)
+        font.setUnderline(False)
+        font.setWeight(75)
+        self.title.setFont(font)
+        self.title.setObjectName("title")
 
-        '''new'''
-        self.file_path_show = wx.TextCtrl(panel, pos=(50, 192), size=(100, 28))
-        self.send_to2 = wx.TextCtrl(panel, pos=(70, 222), size=(80, 28))
+        # 界面分割线
+        self.line_v1 = QtWidgets.QFrame(self.frame_total)
+        self.line_v1.setGeometry(QtCore.QRect(130, 0, 20, 721))
+        self.line_v1.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line_v1.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_v1.setObjectName("line_v1")
+        self.line_h1 = QtWidgets.QFrame(self.frame_total)
+        self.line_h1.setGeometry(QtCore.QRect(140, 180, 841, 16))
+        self.line_h1.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_h1.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_h1.setObjectName("line_h1")
+        self.line_v2 = QtWidgets.QFrame(self.frame_total)
+        self.line_v2.setGeometry(QtCore.QRect(580, 190, 20, 531))
+        self.line_v2.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line_v2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_v2.setObjectName("line_v2")
+        self.frame_buttons.raise_()
+        self.frame_info.raise_()
+        self.frame_send.raise_()
+        self.frame_log.raise_()
+        self.line_v1.raise_()
+        self.line_h1.raise_()
+        self.frame_edit.raise_()
+        self.line_v2.raise_()
+        Client.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(Client)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 30))
+        self.menubar.setObjectName("menubar")
+        Client.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(Client)
+        self.statusbar.setObjectName("statusbar")
+        Client.setStatusBar(self.statusbar)
 
-        self.message_input = wx.TextCtrl(panel, style=wx.TE_MULTILINE, pos=(50, 260), size=(160, 100))
-        self.message_output = wx.TextCtrl(panel, style=wx.TE_MULTILINE | wx.TE_READONLY, pos=(250, 70),
-                                          size=(270, 430))
-        self.user_show = wx.TextCtrl(panel, style=wx.TE_MULTILINE, pos=(50, 435), size=(160, 110))
-        # buttons
-        self.send_button = wx.Button(panel, label=u'send message', pos=(160, 370), size=(90, 30))
+        self.retranslateUi(Client)
 
-        self.group_button = wx.Button(panel,label=u'group',pos=(160,405),size=(90,30))
+        # 定义信号函数
+        self.clear_button.clicked.connect(self.info.clear)
+        self.exit_button.clicked.connect(Client.close)
+        QtCore.QMetaObject.connectSlotsByName(Client)
+        self.login_button.clicked.connect(self.log_in)
+        self.logout_button.clicked.connect(self.log_out)
+        self.send_message_button.clicked.connect(self.sendmess)
+        self.send_file_button.clicked.connect(self.sendfile)
+        self.file_button.clicked.connect(self.choosefile)
 
-        self.login_button = wx.Button(panel, label=u'log in', pos=(50, 163), size=(70, 25))
-        self.logout_button = wx.Button(panel, label=u'log out', pos=(140, 163), size=(70, 25))
-        self.exit_button = wx.Button(panel, label=u'quit', pos=(430, 510), size=(100, 30))
-        self.clear_button = wx.Button(panel, label=u'clear all', pos=(250, 510), size=(170, 30))
-
-        '''new'''
-        self.select_file_button = wx.Button(panel, label=u'file upload', pos=(160, 190), size=(90, 30))
-        self.send_file_button = wx.Button(panel, label=u'send files', pos=(160, 220), size=(90, 30))
-
-        # bind the buttons with functions
-        self.Bind(wx.EVT_BUTTON, self.exit, self.exit_button)
-        self.Bind(wx.EVT_BUTTON, self.send, self.send_button)
-        self.Bind(wx.EVT_BUTTON, self.sendfile, self.send_file_button)
-        self.Bind(wx.EVT_BUTTON, self.clear, self.clear_button)
-        self.Bind(wx.EVT_BUTTON, self.log_in, self.login_button)
-        self.Bind(wx.EVT_BUTTON, self.log_out, self.logout_button)
-        self.Bind(wx.EVT_BUTTON, self.selectfile, self.select_file_button)
-
-        self.Bind(wx.EVT_BUTTON,self.group,self.group_button)
-        # print("\033[41;1m write something here \033[0m")
-
+        # 定义其他变量
         self.connectFlag = False
         self.socketDict = {}
-        self.Show(True)
+        self.Client = Client
 
-    def OnEraseBack(self,event):
-        dc=event.GetDC()
-        if not dc:
-            dc = wx.ClientDC(self)
-            rect=self.GetUpdateRegion().GetBox()
-            dc.SetclippingRect(rect)
-        dc.Clear()
-        bmp=wx.Bitmap("1_1.jpg")
-        dc.DrawBitmap(bmp,0,0)
+    def retranslateUi(self, Client):
+        _translate = QtCore.QCoreApplication.translate
+        Client.setWindowTitle(_translate("Client", "Client"))
+        self.login_label.setText(_translate("Client", "Log in"))
+        self.logout_label.setText(_translate("Client", "Log out"))
+        self.clear_label.setText(_translate("Client", "Clear"))
+        self.exit_label.setText(_translate("Client", "Exit"))
+        self.info_label.setText(_translate("Client", "Received Message"))
+        self.recv_label.setText(_translate("Client", "Send to"))
+        self.file_label.setText(_translate("Client", "File"))
+        self.file_button.setText(_translate("Client", "Select"))
+        self.send_file_button.setText(_translate("Client", "Send File"))
+        self.send_message_button.setText(_translate("Client", "Send Message"))
+        self.message_label.setText(_translate("Client", "Message"))
+        self.ip_label.setText(_translate("Client", "IP"))
+        self.port_label.setText(_translate("Client", "Port"))
+        self.username_label.setText(_translate("Client", "Username"))
+        self.title.setText(_translate("Client", "Client"))
 
-
-    def log_in(self, event):
+    def log_in(self):
         if not self.connectFlag:
             self.connectFlag = True
-            self.name = "<" + self.name_input.GetValue() + ">"
+            self.name = "<" + self.username_edit.text() + ">"
             self.socketDict[self.name] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socketDict[self.name].connect((self.server_ip_input.GetValue(), int(self.server_port_input.GetValue())))
+            self.socketDict[self.name].connect(
+                (self.ip_edit.text(), int(self.port_edit.text())))
             self.socketDict[self.name].send(self.name.encode('utf-8'))
             t1 = threading.Thread(target=self.handle, args=())
             t1.start()
         else:
-            self.message_output.AppendText("you are already inline\n")
+            self.info.append("you are already inline")
 
-    # 要加上event参数
-
-    def log_out(self, event):
+    def log_out(self):
         if self.connectFlag:
             self.connectFlag = False
             self.socketDict[self.name].send("exit".encode('utf-8'))
             self.socketDict[self.name].close()
             del self.socketDict[self.name]
-            # self.message_output.AppendText(self.name+"logged out!\n")
-            self.user_show.Clear()
             self.name = "<anonymous user>"
         else:
-            self.message_output.AppendText("you are already offline\n")
+            self.info.append("you are already offline")
 
-    def exit(self, event):
+    def exit(self):
         # 在关闭客户端时也能够发送消息给服务端，让服务端的线程结束
         if self.connectFlag:
             self.connectFlag = False
             self.socketDict[self.name].send("exit".encode('utf-8'))
             self.socketDict[self.name].close()
-            #del self.socketDict[self.name]
-            # self.message_output.AppendText(self.name+"logged out!\n")
-            #self.user_show.Clear()
-            #self.name = "<anonymous user>"
         else:
-            self.message_output.AppendText("you are already offline\n")
-        self.Close(True)
+            self.info.append("you are already offline")
+        self.Client.Close()
 
-    def send(self, event):
+    def sendmess(self):
         if self.connectFlag:
-            # self.message_output.AppendText(self.name+":")
-            # self.message_output.AppendText(self.message_input.GetValue()+"\n")
-            # self.message_input.Clear()
-            if self.message_input.GetValue() and self.send_to.GetValue():
-                self.socketDict[self.name].send(("sendmess").encode('utf-8'))
-                self.socketDict[self.name].send(("<" + self.send_to.GetValue() + ">" + "-*-" +
-                                                 self.message_input.GetValue()).encode('utf-8'))
-                self.message_input.Clear()
+            if self.message_edit.toPlainText() and self.receiver_choose.currentText():
+                if self.receiver_choose.currentIndex() == 0:
+                    # 选择消息接收者为“all_users”，群发消息
+                    self.socketDict[self.name].send(("sendmess_group").encode('utf-8'))
+                    self.socketDict[self.name].send((self.name+ "-*-" +
+                                                     self.message_edit.toPlainText()).encode('utf-8'))
+                else:
+                    # 否则，单发消息
+                    self.socketDict[self.name].send(("sendmess").encode('utf-8'))
+                    self.socketDict[self.name].send(("<" + self.receiver_choose.currentText() + ">" + "-*-" +
+                                                     self.message_edit.toPlainText()).encode('utf-8'))
+
+                self.message_edit.clear()
+
         else:
-            self.message_output.AppendText("you are offline!\n")
+            self.info.append("you are offline!")
 
-    def group(self,event):
+    def sendfile(self):
         if self.connectFlag:
-            if self.message_input.GetValue():
-                self.socketDict[self.name].send(("group").encode('utf-8'))
-                #self.socketDict[self.name].send((self.message_input.GetValue()).encode('utf-8'))
-                self.socketDict[self.name].send(("<" + self.name + ">" + "-*-" +
-                                                 self.message_input.GetValue()).encode('utf-8'))
-                self.message_input.Clear()
+            if self.receiver_choose.currentIndex() != 0:
+                # 单发文件
+                self.socketDict[self.name].send("sendfile".encode('utf-8'))
+                self.socketDict[self.name].send(("<" + self.receiver_choose.currentText() + ">").encode('utf-8'))
+                filepath = self.file_edit.text()
+                if os.path.isfile(filepath):
+                    fhead = struct.pack('128sl', os.path.basename(filepath).encode('utf-8'),
+                                        os.stat(filepath).st_size)
+                    self.socketDict[self.name].send(fhead)
+
+                    fp = open(filepath, 'rb')
+                    while 1:
+                        data = fp.read(1024)
+                        if not data:
+                            self.info.append('{0} file send over...\n'.format(filepath))
+                            break
+                        self.socketDict[self.name].send(data)
+            '''
+            # 群发文件，在尝试之后，有bug没有解决
             else:
-                self.message_output.AppendText("wrong")
+                # 选择消息接收者为“all_users”，群发文件
+                self.socketDict[self.name].send("sendfile_group".encode('utf-8'))
+                self.socketDict[self.name].send((self.name).encode('utf-8'))
+                filepath = self.file_edit.text()
+                if os.path.isfile(filepath):
+                    fhead = struct.pack('128sl', os.path.basename(filepath).encode('utf-8'),
+                                        os.stat(filepath).st_size)
+                    self.socketDict[self.name].send(fhead)
+
+                    fp = open(filepath, 'rb')
+                    while 1:
+                        data = fp.read(1024)
+                        if not data:
+                            self.info.append('{0} file send over...\n'.format(filepath))
+                            break
+                        self.socketDict[self.name].send(data)
+            '''
+
         else:
-            self.message_output.AppendText("you are offline!\n")
-
-
-    def sendfile(self, event):
-        if self.connectFlag:
-            self.socketDict[self.name].send("sendfile".encode('utf-8'))
-            self.socketDict[self.name].send(("<"+self.send_to2.GetValue()+">").encode('utf-8'))
-            filepath = self.file_path_show.GetValue()
-            if os.path.isfile(filepath):
-                fhead = struct.pack('128sl', os.path.basename(filepath).encode('utf-8'),
-                                    os.stat(filepath).st_size)
-                self.socketDict[self.name].send(fhead)
-                #self.message_output.AppendText('client filepath: {0}\n'.format(filepath))
-
-                fp = open(filepath, 'rb')
-                while 1:
-                    data = fp.read(1024)
-                    if not data:
-                        self.message_output.AppendText('{0} file send over...\n'.format(filepath))
-                        break
-                    self.socketDict[self.name].send(data)
-        else:
-            self.message_output.AppendText("you are offline!\n")
+            self.info.append("you are offline!")
 
     def handle(self):
         while True:
             if self.connectFlag:
                 mode = self.socketDict[self.name].recv(1024).decode('utf-8')
-                if mode == "message":
+
+                if mode == "sendmess":
                     messtext = self.socketDict[self.name].recv(1024).decode('utf-8')
-                    self.message_output.AppendText(messtext)
+                    self.info.insertPlainText(messtext)
                 elif mode == "userupdate":
                     messtext = self.socketDict[self.name].recv(1024).decode('utf-8')
-                    self.user_show.Clear()
-                    self.user_show.AppendText(messtext)
+                    messtext_split = messtext.split('\n')
+
+                    # 维护目前在线用户信息，并更新可供选择的接收者列表
+                    i = 0
+                    j = 1
+                    while i < len(messtext_split) and j < self.receiver_choose.count():
+                        user = messtext_split[i]
+                        if user != self.name:
+                            user = user.strip('<')
+                            user = user.strip('>')
+                            self.receiver_choose.setItemText(j, user)
+                            j += 1
+                        i += 1
+                    while i < len(messtext_split):
+                        user = messtext_split[i]
+                        if user != self.name:
+                            user = user.strip('<')
+                            user = user.strip('>')
+                            self.receiver_choose.addItem(user)
+                        i += 1
+
                 elif mode == "sendfile":
-                    send_user_name = self.socketDict[self.name].recv(1024).decode('utf-8')
+                    send_user_name = self.socketDict[self.name].recv(1024).decode('utf-8',errors='ignore')
                     fileinfo_size = struct.calcsize('128sl')
-                    buf = self.socketDict[self.name].recv(fileinfo_size)
+                    buf = self.socketDict[self.name].recv(fileinfo_size) # 读取文件路径和文件信息
                     if buf:
                         filename, filesize = struct.unpack('128sl', buf)
-                        # self.message_output.AppendText(str(type(filename)))
                         fn = filename.strip(b'\00')
-                        new_filename = os.path.join('./', 'new2_' + fn.decode('utf-8'))
-                        self.message_output.AppendText(send_user_name+"sended you a file\n")
-                        self.message_output.AppendText('Filesize is {0}\n'.format(filesize))
+                        # fn = fn.decode('utf-8')
+                        # fn = fn.split('\\')[-1]
+                        new_filename = os.path.join('./', fn)
+                        if os.path.exists(new_filename): #文件若已经存在，重新命名
+                            new_filename = os.path.join('./', 'new_' + fn)
+                        self.info.append(send_user_name + "sended you a file")
+                        self.info.append('Filesize is {0}'.format(filesize))
                         recvd_size = 0  # 定义已接收文件的大小
                         fp = open(new_filename, 'wb')
-                        self.message_output.AppendText('start receiving...\n')
+                        self.info.append('start receiving...')
 
                         while not recvd_size == filesize:
                             if filesize - recvd_size > 1024:
@@ -210,24 +482,20 @@ class MyFrameClient(wx.Frame):
                                 recvd_size = filesize
                             fp.write(data)
                         fp.close()
-                        self.message_output.AppendText('end receive...\n')
+                        self.info.append('end receive...\n')
             else:
                 break
 
-    def selectfile(self, event):
-
-        dlg = wx.FileDialog(self, u"选择文件", style=wx.DD_DEFAULT_STYLE)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.file_path_show.AppendText(dlg.GetPath())  # 文件夹路径
-
-        dlg.Destroy()
-
-    def clear(self, event):
-        self.message_output.Clear()
+    def choosefile(self):
+        # 调用 QFileDialog，在资源管理器中选择文件路径
+        fileName, _ = QFileDialog.getOpenFileName()
+        self.file_edit.setText(fileName)
 
 
-app = wx.App(False)
-frame = MyFrameClient(None, "client")
-app.MainLoop()
-
-
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    Client = QMainWindow()
+    ui = Ui_Client()
+    ui.setupUi(Client)
+    Client.show()
+    sys.exit(app.exec_())
